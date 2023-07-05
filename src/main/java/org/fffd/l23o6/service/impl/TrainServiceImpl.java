@@ -44,14 +44,18 @@ public class TrainServiceImpl implements TrainService {
         // TODO
         // First, get all routes contains [startCity, endCity]
         // Then, Get all trains on that day with the wanted routes
-        List<RouteEntity> routesContain = routeDao.findAll().stream().
-                filter((RouteEntity tmp)->tmp.getStationIds().contains(startStationId)).
-                filter((RouteEntity tmp)->tmp.getStationIds().contains(endStationId)).toList();
+        if (startStationId.equals(endStationId)) {
+            throw new BizException(CommonErrorType.ILLEGAL_ARGUMENTS, "出发站与到达站不可相同");
+        }
+        List<RouteEntity> routesContain = routeDao.findAll().stream()
+                .filter((RouteEntity tmp)->tmp.getStationIds().contains(startStationId))
+                .filter((RouteEntity tmp)->tmp.getStationIds().contains(endStationId))
+                .toList();
         List<TrainEntity> trainsContain = trainDao.findAll();
         List<TrainEntity> ret = new ArrayList<>();
         for (TrainEntity tmp : trainsContain) {
             for (RouteEntity t : routesContain) {
-                if (Objects.equals(t.getId(), tmp.getRouteId())) {
+                if (t.getId().equals(tmp.getRouteId()) && tmp.getDate().equals(date)) {
                     ret.add(tmp);
                 }
             }
