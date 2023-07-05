@@ -65,15 +65,90 @@ public class GSeriesSeatStrategy extends TrainSeatStrategy {
     public @Nullable String allocSeat(int startStationIndex, int endStationIndex, GSeriesSeatType type, boolean[][] seatMap) {
         //endStationIndex - 1 = upper bound
         // TODO
+
+        if (type == GSeriesSeatType.NO_SEAT) {
+            return GSeriesSeatType.NO_SEAT.getText(); // No seat is allocated for NO_SEAT type
+        }
+        int seatCount = seatMap[0].length;
+
+        int start = 0;
+        int end = 0;
+        switch (type) {
+            case BUSINESS_SEAT:
+                end = BUSINESS_SEAT_MAP.size();
+                break;
+            case FIRST_CLASS_SEAT:
+                start = BUSINESS_SEAT_MAP.size();
+                end = BUSINESS_SEAT_MAP.size() + FIRST_CLASS_SEAT_MAP.size();
+                break;
+            case SECOND_CLASS_SEAT:
+                start = BUSINESS_SEAT_MAP.size() + FIRST_CLASS_SEAT_MAP.size();
+                end = BUSINESS_SEAT_MAP.size() + FIRST_CLASS_SEAT_MAP.size() + SECOND_CLASS_SEAT_MAP.size();
+                break;
+        }
+
+        boolean flag = true;
+        for (int j = start; j < end; j++) {
+            for (int i = startStationIndex; i < endStationIndex; i++) {
+                if (seatMap[i][j]) {
+                    // If the seat is not available, can't allocate it
+                    flag = false;
+                    break;
+                }
+            }
+            if (flag) {
+                for (int i = startStationIndex; i < endStationIndex; i++) {
+                    seatMap[i][j] = true;
+                }
+                return TYPE_MAP.get(type).get(j); // Return the seat identifier
+            } else {
+                flag = true;
+            }
+        }
+
+        // If no available seat is found, return null
         return null;
     }
 
     public Map<GSeriesSeatType, Integer> getLeftSeatCount(int startStationIndex, int endStationIndex, boolean[][] seatMap) {
         // TODO
-        return null;
+        int seatCount = seatMap[0].length;
+        Map<GSeriesSeatType, Integer> leftSeatCountMap = new HashMap<>();
+
+        for (GSeriesSeatType type : GSeriesSeatType.values()) {
+            if (type != GSeriesSeatType.NO_SEAT) {
+                int leftCount = 0;
+                for (int j = 0; j < seatCount; j++) {
+                    boolean flag = true;
+                    for (int i = startStationIndex; i < endStationIndex; i++) {
+                        if (seatMap[i][j]) {
+                            flag = false;
+                            break;
+                        }
+                    }
+                    if (flag && TYPE_MAP.get(type).containsKey(j)) {
+                        // Count the available seats of the specified type
+                        leftCount++;
+                    }
+                }
+                leftSeatCountMap.put(type, leftCount);
+            }
+        }
+        return leftSeatCountMap;
     }
 
     public boolean[][] initSeatMap(int stationCount) {
         return new boolean[stationCount - 1][BUSINESS_SEAT_MAP.size() + FIRST_CLASS_SEAT_MAP.size() + SECOND_CLASS_SEAT_MAP.size()];
+    }
+
+    public double[][] initSeatPrices(int stationCount) {
+        double[][] seatPrices = new double[stationCount - 1][GSeriesSeatType.values().length];
+        for (int i = 0; i < stationCount - 1; i++) {
+            seatPrices[i][GSeriesSeatType.BUSINESS_SEAT.ordinal()] = 50;
+            seatPrices[i][GSeriesSeatType.FIRST_CLASS_SEAT.ordinal()] = 30;
+            seatPrices[i][GSeriesSeatType.SECOND_CLASS_SEAT.ordinal()] = 20;
+            seatPrices[i][GSeriesSeatType.NO_SEAT.ordinal()] = 15;
+        }
+        return seatPrices;
     }
 }
