@@ -44,7 +44,31 @@ public class TrainServiceImpl implements TrainService {
         // TODO
         // First, get all routes contains [startCity, endCity]
         // Then, Get all trains on that day with the wanted routes
-        return null;
+        List<RouteEntity> routesContain = routeDao.findAll().stream().
+                filter((RouteEntity tmp)->tmp.getStationIds().contains(startStationId)).
+                filter((RouteEntity tmp)->tmp.getStationIds().contains(endStationId)).toList();
+        List<TrainEntity> trainsContain = trainDao.findAll();
+        List<TrainEntity> ret = new ArrayList<>();
+        for (TrainEntity tmp : trainsContain) {
+            for (RouteEntity t : routesContain) {
+                if (Objects.equals(t.getId(), tmp.getRouteId())) {
+                    ret.add(tmp);
+                }
+            }
+        }
+        List<TrainVO> trainVOList = new ArrayList<>();
+        for (TrainEntity train: ret) {
+            RouteEntity route = routeDao.findById(train.getRouteId()).get();
+            int startStationIndex = route.getStationIds().indexOf(startStationId);
+            int endStationIndex = route.getStationIds().indexOf(endStationId);
+            TrainVO trainVO = TrainVO.builder().id(train.getId()).name(train.getName())
+                    .trainType(train.getTrainType().getText()).startStationId(startStationId).endStationId(endStationId)
+                    .departureTime(train.getDepartureTimes().get(startStationIndex))
+                    .arrivalTime(train.getArrivalTimes().get(endStationIndex))
+                    .ticketInfo(createTicketInfos(train, startStationIndex, endStationIndex)).build();
+            trainVOList.add(trainVO);
+        }
+        return trainVOList;
     }
 
     @Override
@@ -96,7 +120,25 @@ public class TrainServiceImpl implements TrainService {
     public void changeTrain(Long id, String name, Long routeId, TrainType type, String date, List<Date> arrivalTimes,
                             List<Date> departureTimes, List<List<Double>> seatPrices) {
         // TODO: edit train info, please refer to `addTrain` above
-
+        TrainEntity entity = trainDao.findById(id).get().setName(name).setRouteId(routeId).setTrainType(type)
+                .setDate(date).setArrivalTimes(arrivalTimes).setDepartureTimes(departureTimes);
+        RouteEntity route = routeDao.findById(routeId).get();
+        if (route.getStationIds().size() != entity.getArrivalTimes().size()
+                || route.getStationIds().size() != entity.getDepartureTimes().size()) {
+            throw new BizException(CommonErrorType.ILLEGAL_ARGUMENTS, "列表长度错误");
+        }
+        entity.setExtraInfos(new ArrayList<String>(Collections.nCopies(route.getStationIds().size(), "预计正点")));
+        switch (entity.getTrainType()) {
+            case HIGH_SPEED :
+                entity.setSeats(GSeriesSeatStrategy.INSTANCE.initSeatMap(route.getStationIds().size()));
+                entity.setSeatPrices(doubleListToArray(seatPrices));
+                break;
+            case NORMAL_SPEED :
+                entity.setSeats(KSeriesSeatStrategy.INSTANCE.initSeatMap(route.getStationIds().size()));
+                entity.setSeatPrices(doubleListToArray(seatPrices));
+                break;
+        }
+        trainDao.save(entity);
     }
 
     @Override
