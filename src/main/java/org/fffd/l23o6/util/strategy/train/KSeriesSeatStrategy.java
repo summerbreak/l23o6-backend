@@ -121,6 +121,7 @@ public class KSeriesSeatStrategy extends TrainSeatStrategy {
         Map<KSeriesSeatType, Integer> leftSeatCountMap = new HashMap<>();
 
 
+
         for (KSeriesSeatType type : KSeriesSeatType.values()) {
             if (type != KSeriesSeatType.NO_SEAT) {
                 int leftCount = 0;
