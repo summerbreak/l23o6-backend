@@ -8,14 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.fffd.l23o6.pojo.vo.station.AddStationRequest;
 import org.fffd.l23o6.pojo.vo.station.StationVO;
 import org.fffd.l23o6.service.StationService;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 @RestController
@@ -44,6 +37,12 @@ public class StationController {
     @PutMapping("admin/station/{stationId}")
     public CommonResponse<?> editStation(@PathVariable("stationId") Long stationId, @Valid @RequestBody AddStationRequest request) {
         stationService.editStation(stationId, request.getName());
+        return CommonResponse.success();
+    }
+
+    @DeleteMapping("admin/station/{stationId}")
+    public CommonResponse<?> deleteStation(@PathVariable Long stationId) {
+        stationService.deleteStation(stationId);
         return CommonResponse.success();
     }
 }
