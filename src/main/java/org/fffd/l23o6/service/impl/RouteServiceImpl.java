@@ -38,4 +38,8 @@ public class RouteServiceImpl implements RouteService {
     public void editRoute(Long id, String name, List<Long> stationIds) {
         routeDao.save(routeDao.findById(id).get().setStationIds(stationIds).setName(name));
     }
+    @Override
+    public void deleteRoute(Long routeId){
+        routeDao.deleteById(routeId);
+    }
 }
