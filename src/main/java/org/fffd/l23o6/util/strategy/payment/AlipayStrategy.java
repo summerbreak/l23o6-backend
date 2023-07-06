@@ -4,8 +4,10 @@ import com.alibaba.fastjson.JSONObject;
 import com.alipay.api.AlipayClient;
 import com.alipay.api.DefaultAlipayClient;
 import com.alipay.api.request.AlipayTradePagePayRequest;
+import com.alipay.api.request.AlipayTradeQueryRequest;
 import com.alipay.api.request.AlipayTradeRefundRequest;
 import com.alipay.api.response.AlipayTradePagePayResponse;
+import com.alipay.api.response.AlipayTradeQueryResponse;
 import com.alipay.api.response.AlipayTradeRefundResponse;
 import io.github.lyc8503.spring.starter.incantation.exception.BizException;
 import org.fffd.l23o6.exception.BizError;
@@ -35,6 +37,8 @@ public class AlipayStrategy extends PaymentStrategy {
 
     // 字符编码格式
     private static final String charset = "utf-8";
+
+    private static final String TRADE_SUCCESS = "TRADE_SUCCESS";
 
     // 支付宝网关
     private static final String gatewayUrl = "https://openapi-sandbox.dl.alipaydev.com/gateway.do";
@@ -104,5 +108,28 @@ public class AlipayStrategy extends PaymentStrategy {
             e.printStackTrace();
         }
         return "failed";
+    }
+
+    public boolean isTradeSuccess(Long orderId) {
+        AlipayClient alipayClient = new DefaultAlipayClient(gatewayUrl, app_id, merchant_private_key, format, charset,
+                alipay_public_key, sign_type);
+        AlipayTradeQueryRequest request = new AlipayTradeQueryRequest();
+        JSONObject bizContent = new JSONObject();
+        bizContent.put("out_trade_no", orderId);
+        request.setBizContent(bizContent.toString());
+        try {
+            AlipayTradeQueryResponse response = alipayClient.execute(request);
+            if (response.isSuccess()) {
+                System.out.println("调用成功");
+                if (response.getTradeStatus().equals(TRADE_SUCCESS)) {
+                    return true;
+                }
+            } else {
+                System.out.println("调用失败");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

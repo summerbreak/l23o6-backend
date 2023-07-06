@@ -1,5 +1,6 @@
 package org.fffd.l23o6.service.impl;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -74,6 +75,30 @@ public class OrderServiceImpl implements OrderService {
         trainDao.save(train);
         orderDao.save(order);
         return order.getId();
+    }
+
+    public void checkOrders() {
+        // check if an order by Alipay is paid successfully
+        List<OrderEntity> alipayOrders = orderDao.findAll().stream()
+                .filter((OrderEntity order) -> order.getPaymentType().equals("alipay") &&
+                        order.getStatus().equals(OrderStatus.PENDING_PAYMENT))
+                .toList();
+        for (OrderEntity order: alipayOrders) {
+            if (AlipayStrategy.INSTANCE.isTradeSuccess(order.getId())) {
+                order.setStatus(OrderStatus.PAID);
+            }
+        }
+        orderDao.saveAll(alipayOrders);
+        // check if a paid order is completed via date
+        List<OrderEntity> paidOrders = orderDao.findAll().stream()
+                .filter((OrderEntity order) -> order.getStatus().equals(OrderStatus.PAID)).toList();
+        for (OrderEntity order: paidOrders) {
+            TrainEntity train = trainDao.findById(order.getTrainId()).get();
+            if (train.getArrivalTimes().get(0).before(new Date())) {
+                order.setStatus(OrderStatus.COMPLETED);
+            }
+        }
+        orderDao.saveAll(paidOrders);
     }
 
     public List<OrderVO> listOrders(String username) {

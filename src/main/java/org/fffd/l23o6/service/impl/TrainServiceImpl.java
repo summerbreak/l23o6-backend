@@ -48,8 +48,8 @@ public class TrainServiceImpl implements TrainService {
             throw new BizException(CommonErrorType.ILLEGAL_ARGUMENTS, "出发站与到达站不可相同");
         }
         List<RouteEntity> routesContain = routeDao.findAll().stream()
-                .filter((RouteEntity tmp)->tmp.getStationIds().contains(startStationId))
-                .filter((RouteEntity tmp)->tmp.getStationIds().contains(endStationId))
+                .filter((RouteEntity tmp) -> tmp.getStationIds().contains(startStationId))
+                .filter((RouteEntity tmp) -> tmp.getStationIds().contains(endStationId))
                 .toList();
         List<TrainEntity> trainsContain = trainDao.findAll();
         List<TrainEntity> ret = new ArrayList<>();
@@ -61,7 +61,7 @@ public class TrainServiceImpl implements TrainService {
             }
         }
         List<TrainVO> trainVOList = new ArrayList<>();
-        for (TrainEntity train: ret) {
+        for (TrainEntity train : ret) {
             RouteEntity route = routeDao.findById(train.getRouteId()).get();
             int startStationIndex = route.getStationIds().indexOf(startStationId);
             int endStationIndex = route.getStationIds().indexOf(endStationId);
@@ -97,7 +97,7 @@ public class TrainServiceImpl implements TrainService {
 
     @Override
     public void addTrain(String name, Long routeId, TrainType type, String date, List<Date> arrivalTimes,
-            List<Date> departureTimes, List<List<Double>> seatPrices) {
+                         List<Date> departureTimes, List<List<Double>> seatPrices) {
         TrainEntity entity = TrainEntity.builder().name(name).routeId(routeId).trainType(type)
                 .date(date).arrivalTimes(arrivalTimes).departureTimes(departureTimes).build();
         RouteEntity route = routeDao.findById(routeId).get();
@@ -133,11 +133,11 @@ public class TrainServiceImpl implements TrainService {
         }
         entity.setExtraInfos(new ArrayList<String>(Collections.nCopies(route.getStationIds().size(), "预计正点")));
         switch (entity.getTrainType()) {
-            case HIGH_SPEED :
+            case HIGH_SPEED:
                 entity.setSeats(GSeriesSeatStrategy.INSTANCE.initSeatMap(route.getStationIds().size()));
                 entity.setSeatPrices(doubleListToArray(seatPrices));
                 break;
-            case NORMAL_SPEED :
+            case NORMAL_SPEED:
                 entity.setSeats(KSeriesSeatStrategy.INSTANCE.initSeatMap(route.getStationIds().size()));
                 entity.setSeatPrices(doubleListToArray(seatPrices));
                 break;
