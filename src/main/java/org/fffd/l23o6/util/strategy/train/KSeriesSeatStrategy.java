@@ -116,6 +116,27 @@ public class KSeriesSeatStrategy extends TrainSeatStrategy {
         return null;
     }
 
+    public void freeSeat(int startStationIndex, int endStationIndex, boolean[][] seatMap, String seatName) {
+        // used in 'cancelOrders'
+        if (seatName.equals(KSeriesSeatType.NO_SEAT.getText())) {
+            return;
+        }
+
+        int j = 0;
+        for (int i = 0; i < KSeriesSeatType.values().length; i++) {
+            Map<Integer, String> seatNameMap = TYPE_MAP.get(KSeriesSeatType.values()[i]);
+            for (Map.Entry<Integer, String> entry : seatNameMap.entrySet()) {
+                if (entry.getValue().equals(seatName)) {
+                    j = entry.getKey();
+                }
+            }
+        }
+
+        for (int i = startStationIndex; i < endStationIndex; i++) {
+            seatMap[i][j] = false;
+        }
+    }
+
 
     public boolean[][] initSeatMap(int stationCount) {
         return new boolean[stationCount - 1][SOFT_SLEEPER_SEAT_MAP.size() + HARD_SLEEPER_SEAT_MAP.size() + SOFT_SEAT_MAP.size() + HARD_SEAT_MAP.size()];

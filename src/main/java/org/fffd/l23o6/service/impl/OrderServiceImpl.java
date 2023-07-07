@@ -23,6 +23,7 @@ import org.fffd.l23o6.util.strategy.payment.PaymentStrategy;
 import org.fffd.l23o6.util.strategy.payment.WeChatPayStrategy;
 import org.fffd.l23o6.util.strategy.train.GSeriesSeatStrategy;
 import org.fffd.l23o6.util.strategy.train.KSeriesSeatStrategy;
+import org.fffd.l23o6.util.strategy.train.TrainSeatStrategy;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
@@ -180,7 +181,21 @@ public class OrderServiceImpl implements OrderService {
             }
         }
 
+        // update the left seats
+        TrainEntity train = trainDao.findById(order.getTrainId()).get();
+        RouteEntity route = routeDao.findById(train.getRouteId()).get();
+        int startIndex = route.getStationIds().indexOf(order.getDepartureStationId());
+        int endIndex = route.getStationIds().indexOf(order.getArrivalStationId());
+        switch (train.getTrainType()) {
+            case HIGH_SPEED -> GSeriesSeatStrategy.INSTANCE.freeSeat(startIndex, endIndex, train.getSeats(),
+                    order.getSeat());
+            case NORMAL_SPEED -> KSeriesSeatStrategy.INSTANCE.freeSeat(startIndex, endIndex, train.getSeats(),
+                    order.getSeat());
+            default -> throw new BizException(CommonErrorType.ILLEGAL_ARGUMENTS);
+        }
+
         order.setStatus(OrderStatus.CANCELLED);
+        trainDao.save(train);
         userDao.save(user);
         orderDao.save(order);
     }
