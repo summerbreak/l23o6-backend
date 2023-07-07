@@ -116,12 +116,30 @@ public class KSeriesSeatStrategy extends TrainSeatStrategy {
         return null;
     }
 
+    public void freeSeat(int startStationIndex, int endStationIndex, KSeriesSeatType type, boolean[][] seatMap, String seat) {
+        // used in 'cancelOrders'
+        if (type == KSeriesSeatType.NO_SEAT) {
+            return; // No seat is allocated for NO_SEAT type
+        }
+
+        Map<Integer, String> SeatMap = TYPE_MAP.get(type);
+        int j =0;
+        for (Map.Entry<Integer, String> entry : seatMap.entrySet()) {
+            if (entry.getValue().equals(seatName)) {
+                j=entry.getKey();
+            }
+        }
+
+        for (int i = startStationIndex; i < endStationIndex; i++) {
+            seatMap[i][j]=false;
+        }
+        // If no available seat is found, return null
+        return null;
+    }
+
     public Map<KSeriesSeatType, Integer> getLeftSeatCount(int startStationIndex, int endStationIndex, boolean[][] seatMap) {
         int seatCount = seatMap[0].length;
         Map<KSeriesSeatType, Integer> leftSeatCountMap = new HashMap<>();
-
-
-
         for (KSeriesSeatType type : KSeriesSeatType.values()) {
             if (type != KSeriesSeatType.NO_SEAT) {
                 int leftCount = 0;
