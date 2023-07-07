@@ -11,6 +11,7 @@ import com.alipay.api.response.AlipayTradeQueryResponse;
 import com.alipay.api.response.AlipayTradeRefundResponse;
 import io.github.lyc8503.spring.starter.incantation.exception.BizException;
 import org.fffd.l23o6.exception.BizError;
+import org.springframework.data.util.Pair;
 
 public class AlipayStrategy extends PaymentStrategy {
     public static final AlipayStrategy INSTANCE = new AlipayStrategy();
@@ -56,7 +57,7 @@ public class AlipayStrategy extends PaymentStrategy {
     }
 
     @Override
-    public String pay(double price, Long orderId) {
+    public Pair<String, Long> pay(double price, Long orderId, Long credit) {
         AlipayClient alipayClient = new DefaultAlipayClient(gatewayUrl, app_id, merchant_private_key, format, charset,
                 alipay_public_key, sign_type);
         AlipayTradePagePayRequest request = new AlipayTradePagePayRequest();
@@ -73,7 +74,8 @@ public class AlipayStrategy extends PaymentStrategy {
             AlipayTradePagePayResponse response = alipayClient.pageExecute(request);
             if (response.isSuccess()) {
                 System.out.println("调用成功");
-                return paymentPageHTMLBefore + response.getBody() + paymentPageHTMLAfter;
+                String resp = paymentPageHTMLBefore + response.getBody() + paymentPageHTMLAfter;
+                return Pair.of(resp, credit);
             } else {
                 System.out.println("调用失败");
                 throw new BizException(BizError.PAYMENT_FAILED);
@@ -81,11 +83,11 @@ public class AlipayStrategy extends PaymentStrategy {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return "failed";
+        return Pair.of("failed", credit);
     }
 
     @Override
-    public String refund(double price, Long orderId) {
+    public Pair<String, Long> refund(double price, Long orderId, Long credit) {
         AlipayClient alipayClient = new DefaultAlipayClient(gatewayUrl, app_id, merchant_private_key, format, charset,
                 alipay_public_key, sign_type);
         AlipayTradeRefundRequest request = new AlipayTradeRefundRequest();
@@ -100,14 +102,15 @@ public class AlipayStrategy extends PaymentStrategy {
             AlipayTradeRefundResponse response = alipayClient.execute(request);
             if (response.isSuccess()) {
                 System.out.println("调用成功");
-                return response.getBody();
+                credit = credit - priceToCredit(credit);
+                return Pair.of(response.getBody(), credit);
             } else {
                 System.out.println("调用失败");
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return "failed";
+        return Pair.of("failed", credit);
     }
 
     public boolean isTradeSuccess(Long orderId) {

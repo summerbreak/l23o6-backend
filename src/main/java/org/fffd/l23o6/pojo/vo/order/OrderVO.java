@@ -4,6 +4,7 @@ import java.util.Date;
 
 import lombok.Builder;
 import lombok.Data;
+import org.fffd.l23o6.pojo.enum_.PaymentType;
 
 @Builder
 @Data
@@ -18,5 +19,5 @@ public class OrderVO {
     private Date createdAt;
     private String seat;
     private Double price;
-    private String paymentType;
+    private PaymentType paymentType;
 }

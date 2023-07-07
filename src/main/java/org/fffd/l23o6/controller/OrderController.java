@@ -31,7 +31,9 @@ public class OrderController {
     @PostMapping("order")
     public CommonResponse<OrderIdVO> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         StpUtil.checkLogin();
-        return CommonResponse.success(new OrderIdVO(orderService.createOrder(StpUtil.getLoginIdAsString(), request.getTrainId(), request.getStartStationId(), request.getEndStationId(), request.getSeatType(), request.getPaymentType())));
+        return CommonResponse.success(new OrderIdVO(orderService.createOrder(StpUtil.getLoginIdAsString(),
+                request.getTrainId(), request.getStartStationId(), request.getEndStationId(), request.getSeatType(),
+                request.getPaymentType())));
     }
 
     @GetMapping("order")
@@ -49,7 +51,6 @@ public class OrderController {
     @PatchMapping("order/{orderId}")
     public CommonResponse<?> patchOrder(@PathVariable("orderId") Long orderId,
                                         @Valid @RequestBody PatchOrderRequest request) {
-        System.out.println("into here******\n");
         String resp = null;
         switch (request.getStatus()) {
             case PAID:
@@ -83,13 +84,13 @@ public class OrderController {
     }
 
     /* only for test
+     */
     @RequestMapping("alipay_test")
     public void alipayTest(HttpServletResponse response) {
         response.setContentType("text/html;charset=utf-8");
         try {
             PrintWriter writer = response.getWriter();
-            String str = orderService.payOrder(114514L);
-//            System.out.println(str);
+            String str = orderService.payOrder(123456L);
             writer.write(str);
             writer.flush();
             writer.close();
@@ -97,5 +98,4 @@ public class OrderController {
             e.printStackTrace();
         }
     }
-    */
 }

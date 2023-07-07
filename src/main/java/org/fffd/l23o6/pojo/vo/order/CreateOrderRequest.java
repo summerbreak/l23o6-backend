@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import org.fffd.l23o6.pojo.enum_.PaymentType;
 
 @Data
 @Schema(description = "创建订单请求")
@@ -56,5 +57,5 @@ public class CreateOrderRequest{
 
     @Schema(description = "支付方式", required = true)
     @NotNull
-    private String paymentType;
+    private PaymentType paymentType;
 }

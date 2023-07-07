@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import org.fffd.l23o6.pojo.enum_.OrderStatus;
+import org.fffd.l23o6.pojo.enum_.PaymentType;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -46,7 +47,7 @@ public class OrderEntity {
     private String seat;
 
     @NotNull
-    private String paymentType;
+    private PaymentType paymentType;
 
     @NotNull
     private Double price;

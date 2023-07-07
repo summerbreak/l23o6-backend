@@ -15,13 +15,15 @@ import org.fffd.l23o6.exception.BizError;
 import org.fffd.l23o6.pojo.entity.OrderEntity;
 import org.fffd.l23o6.pojo.entity.RouteEntity;
 import org.fffd.l23o6.pojo.entity.TrainEntity;
+import org.fffd.l23o6.pojo.enum_.PaymentType;
 import org.fffd.l23o6.pojo.vo.order.OrderVO;
 import org.fffd.l23o6.service.OrderService;
 import org.fffd.l23o6.util.strategy.payment.AlipayStrategy;
-import org.fffd.l23o6.util.strategy.payment.CreditStrategy;
 import org.fffd.l23o6.util.strategy.payment.PaymentStrategy;
+import org.fffd.l23o6.util.strategy.payment.WeChatPayStrategy;
 import org.fffd.l23o6.util.strategy.train.GSeriesSeatStrategy;
 import org.fffd.l23o6.util.strategy.train.KSeriesSeatStrategy;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import io.github.lyc8503.spring.starter.incantation.exception.CommonErrorType;
@@ -38,7 +40,7 @@ public class OrderServiceImpl implements OrderService {
 
 
     public Long createOrder(String username, Long trainId, Long fromStationId, Long toStationId, String seatType,
-            String paymentType) {
+            PaymentType paymentType) {
         Long userId = userDao.findByUsername(username).getId();
         TrainEntity train = trainDao.findById(trainId).get();
         RouteEntity route = routeDao.findById(train.getRouteId()).get();
@@ -80,7 +82,7 @@ public class OrderServiceImpl implements OrderService {
     public void checkOrders() {
         // check if an order by Alipay is paid successfully
         List<OrderEntity> alipayOrders = orderDao.findAll().stream()
-                .filter((OrderEntity order) -> order.getPaymentType().equals("alipay") &&
+                .filter((OrderEntity order) -> order.getPaymentType().equals(PaymentType.ALI_PAY) &&
                         order.getStatus().equals(OrderStatus.PENDING_PAYMENT))
                 .toList();
         for (OrderEntity order: alipayOrders) {
@@ -151,17 +153,16 @@ public class OrderServiceImpl implements OrderService {
 
         // TODO: refund user's money and credits if needed
         if (order.getStatus() == OrderStatus.PAID) {
-            PaymentStrategy paymentStrategy = CreditStrategy.INSTANCE;
-            double price = order.getPrice();
-            long creditChange = Math.round(price * 100);
-            if (order.getPaymentType().equals("credit")) {
-                creditChange = -creditChange;
-            } else {
-                paymentStrategy = AlipayStrategy.INSTANCE;
-                creditChange = Math.round(price * 5);
+            PaymentStrategy paymentStrategy;
+            switch (order.getPaymentType()) {
+                case ALI_PAY -> paymentStrategy = AlipayStrategy.INSTANCE;
+                case WECHAT_PAY -> paymentStrategy = WeChatPayStrategy.INSTANCE;
+                default -> throw new BizException(CommonErrorType.ILLEGAL_ARGUMENTS);
             }
-            paymentStrategy.refund(price, order.getId());
-            user.setCredit(user.getCredit() - creditChange);
+            Pair<String, Long> response = paymentStrategy.refund(order.getPrice(), order.getId(), user.getCredit());
+            if (!response.getFirst().equals("failed")) {
+                user.setCredit(response.getSecond());
+            }
         }
 
         order.setStatus(OrderStatus.CANCELLED);
@@ -170,9 +171,6 @@ public class OrderServiceImpl implements OrderService {
     }
 
     public String payOrder(Long id) {
-        if (id == 114514L) {
-            return AlipayStrategy.INSTANCE.pay(123, 114514L);
-        }
         OrderEntity order = orderDao.findById(id).get();
         UserEntity user = userDao.findById(order.getUserId()).get();
 
@@ -182,27 +180,20 @@ public class OrderServiceImpl implements OrderService {
 
         // TODO: use payment strategy to pay!
         // TODO: update user's credits, so that user can get discount next time
-        PaymentStrategy paymentStrategy = CreditStrategy.INSTANCE;
+        PaymentStrategy paymentStrategy;
         double price = order.getPrice();
-        long creditChange = Math.round(price * 100);
-        if (order.getPaymentType().equals("credit")) {
-            if (user.getCredit() < creditChange) {
-                throw new BizException(BizError.CREDIT_NOT_ENOUGH);
-            }
-            creditChange = -creditChange;
-        } else if (order.getPaymentType().equals("alipay")) {
-            paymentStrategy = AlipayStrategy.INSTANCE;
-            creditChange = Math.round(price * 5);
-        } else {
-            throw new BizException(CommonErrorType.ILLEGAL_ARGUMENTS);
+        switch (order.getPaymentType()) {
+            case ALI_PAY -> paymentStrategy = AlipayStrategy.INSTANCE;
+            case WECHAT_PAY -> paymentStrategy = WeChatPayStrategy.INSTANCE;
+            default -> throw new BizException(CommonErrorType.ILLEGAL_ARGUMENTS);
         }
-        String response = paymentStrategy.pay(price, order.getId());
-        user.setCredit(user.getCredit() + creditChange);
+        Pair<String, Long> response = paymentStrategy.pay(price, order.getId(), user.getCredit());
+        user.setCredit(response.getSecond());
 
         order.setStatus(OrderStatus.PAID);
         userDao.save(user);
         orderDao.save(order);
-        return response;
+        return response.getFirst();
     }
 
 }
