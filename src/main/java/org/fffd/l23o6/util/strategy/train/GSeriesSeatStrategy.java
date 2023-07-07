@@ -110,10 +110,6 @@ public class GSeriesSeatStrategy extends TrainSeatStrategy {
         return null;
     }
 
-    public void freeSeat(int startStationIndex, int endStationIndex, GSeriesSeatType type, boolean[][] seatMap, String seat) {
-        // used in 'cancelOrders'
-    }
-
     public Map<GSeriesSeatType, Integer> getLeftSeatCount(int startStationIndex, int endStationIndex, boolean[][] seatMap) {
         // TODO
         int seatCount = seatMap[0].length;
