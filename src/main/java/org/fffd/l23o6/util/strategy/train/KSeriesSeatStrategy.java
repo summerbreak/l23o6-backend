@@ -116,6 +116,10 @@ public class KSeriesSeatStrategy extends TrainSeatStrategy {
         return null;
     }
 
+    public void freeSeat(int startStationIndex, int endStationIndex, KSeriesSeatType type, boolean[][] seatMap, String seat) {
+
+    }
+
     public Map<KSeriesSeatType, Integer> getLeftSeatCount(int startStationIndex, int endStationIndex, boolean[][] seatMap) {
         int seatCount = seatMap[0].length;
         Map<KSeriesSeatType, Integer> leftSeatCountMap = new HashMap<>();
@@ -146,17 +150,5 @@ public class KSeriesSeatStrategy extends TrainSeatStrategy {
 
     public boolean[][] initSeatMap(int stationCount) {
         return new boolean[stationCount - 1][SOFT_SLEEPER_SEAT_MAP.size() + HARD_SLEEPER_SEAT_MAP.size() + SOFT_SEAT_MAP.size() + HARD_SEAT_MAP.size()];
-    }
-
-    public double[][] initSeatPrices(int stationCount) {
-        double[][] seatPrices = new double[stationCount - 1][KSeriesSeatType.values().length];
-        for (int i = 0; i < stationCount - 1; i++) {
-            seatPrices[i][KSeriesSeatType.SOFT_SLEEPER_SEAT.ordinal()] = 40;
-            seatPrices[i][KSeriesSeatType.HARD_SLEEPER_SEAT.ordinal()] = 30;
-            seatPrices[i][KSeriesSeatType.SOFT_SEAT.ordinal()] = 25;
-            seatPrices[i][KSeriesSeatType.HARD_SEAT.ordinal()] = 15;
-            seatPrices[i][KSeriesSeatType.NO_SEAT.ordinal()] = 10;
-        }
-        return seatPrices;
     }
 }

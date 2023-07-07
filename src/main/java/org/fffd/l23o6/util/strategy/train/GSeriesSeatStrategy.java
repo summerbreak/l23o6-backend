@@ -110,6 +110,10 @@ public class GSeriesSeatStrategy extends TrainSeatStrategy {
         return null;
     }
 
+    public void freeSeat(int startStationIndex, int endStationIndex, GSeriesSeatType type, boolean[][] seatMap, String seat) {
+        // used in 'cancelOrders'
+    }
+
     public Map<GSeriesSeatType, Integer> getLeftSeatCount(int startStationIndex, int endStationIndex, boolean[][] seatMap) {
         // TODO
         int seatCount = seatMap[0].length;
@@ -139,16 +143,5 @@ public class GSeriesSeatStrategy extends TrainSeatStrategy {
 
     public boolean[][] initSeatMap(int stationCount) {
         return new boolean[stationCount - 1][BUSINESS_SEAT_MAP.size() + FIRST_CLASS_SEAT_MAP.size() + SECOND_CLASS_SEAT_MAP.size()];
-    }
-
-    public double[][] initSeatPrices(int stationCount) {
-        double[][] seatPrices = new double[stationCount - 1][GSeriesSeatType.values().length];
-        for (int i = 0; i < stationCount - 1; i++) {
-            seatPrices[i][GSeriesSeatType.BUSINESS_SEAT.ordinal()] = 50;
-            seatPrices[i][GSeriesSeatType.FIRST_CLASS_SEAT.ordinal()] = 30;
-            seatPrices[i][GSeriesSeatType.SECOND_CLASS_SEAT.ordinal()] = 20;
-            seatPrices[i][GSeriesSeatType.NO_SEAT.ordinal()] = 15;
-        }
-        return seatPrices;
     }
 }

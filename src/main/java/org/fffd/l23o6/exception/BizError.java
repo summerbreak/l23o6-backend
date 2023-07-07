@@ -14,7 +14,8 @@ public enum BizError implements ErrorType {
     OUT_OF_SEAT(300001, "无可用座位", 400),
     ILLEAGAL_ORDER_STATUS(400001, "非法的订单状态", 400),
     CREDIT_NOT_ENOUGH(500001, "积分不足", 400),
-    PAYMENT_FAILED(500002, "支付失败", 400);
+    PAYMENT_FAILED(500002, "支付失败", 400),
+    MONEY_NOT_ENOUGH(500003, "余额不足", 400);
 
     final int code;
     final String message;

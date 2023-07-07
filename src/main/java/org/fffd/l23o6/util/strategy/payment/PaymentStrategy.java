@@ -11,4 +11,8 @@ public abstract class PaymentStrategy {
     public Long priceToCredit(double price) {
         return Math.round(price * 10);
     }
+
+    public double discountByCredit(Long credit) {
+        return 0;
+    }
 }
