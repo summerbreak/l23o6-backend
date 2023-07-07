@@ -40,8 +40,9 @@ public class OrderServiceImpl implements OrderService {
 
 
     public Long createOrder(String username, Long trainId, Long fromStationId, Long toStationId, String seatType,
-            PaymentType paymentType) {
+            PaymentType paymentType, Boolean useCredit) {
         Long userId = userDao.findByUsername(username).getId();
+        UserEntity user = userDao.findByUsername(username);
         TrainEntity train = trainDao.findById(trainId).get();
         RouteEntity route = routeDao.findById(train.getRouteId()).get();
         int startStationIndex = route.getStationIds().indexOf(fromStationId);
@@ -66,20 +67,31 @@ public class OrderServiceImpl implements OrderService {
         if (seat == null) {
             throw new BizException(BizError.OUT_OF_SEAT);
         }
+        // calculate the price
         double price = 0;
         for (int i = startStationIndex; i < endStationIndex; i++) {
             price += priceTable[i][typeIndex];
         }
-        OrderEntity order = OrderEntity.builder().trainId(trainId).userId(userId).seat(seat).paymentType(paymentType)
-                .status(OrderStatus.PENDING_PAYMENT).arrivalStationId(toStationId).departureStationId(fromStationId)
-                .price(price).build();
+        // if use_credit is enabled, give a discount on the price.
+        if (useCredit) {
+            price -= PaymentStrategy.discountByCredit(user.getCredit());
+            user.setCredit(0L);
+            userDao.save(user);
+        }
+        OrderEntity order = OrderEntity.builder().id(System.currentTimeMillis()).trainId(trainId).userId(userId)
+                .seat(seat).paymentType(paymentType).status(OrderStatus.PENDING_PAYMENT).arrivalStationId(toStationId)
+                .departureStationId(fromStationId).price(price).build();
         train.setUpdatedAt(null);// force it to update
         trainDao.save(train);
         orderDao.save(order);
         return order.getId();
     }
 
-    public void checkOrders() {
+    /**
+     * 检查订单状态，包括是否支付成功，是否已完成（过发车时间即视为已完成），订单完成后更新用户积分
+     * @param username 用户积分
+     */
+    public void checkOrders(String username) {
         // check if an order by Alipay is paid successfully
         List<OrderEntity> alipayOrders = orderDao.findAll().stream()
                 .filter((OrderEntity order) -> order.getPaymentType().equals(PaymentType.ALI_PAY) &&
@@ -91,15 +103,18 @@ public class OrderServiceImpl implements OrderService {
             }
         }
         orderDao.saveAll(alipayOrders);
-        // check if a paid order is completed via date
+        // check if a paid order is completed via date and update user's credit
+        UserEntity user = userDao.findByUsername(username);
         List<OrderEntity> paidOrders = orderDao.findAll().stream()
                 .filter((OrderEntity order) -> order.getStatus().equals(OrderStatus.PAID)).toList();
         for (OrderEntity order: paidOrders) {
             TrainEntity train = trainDao.findById(order.getTrainId()).get();
             if (train.getArrivalTimes().get(0).before(new Date())) {
                 order.setStatus(OrderStatus.COMPLETED);
+                user.setCredit(user.getCredit() + PaymentStrategy.priceToCredit(order.getPrice()));
             }
         }
+        userDao.save(user);
         orderDao.saveAll(paidOrders);
     }
 
@@ -190,10 +205,11 @@ public class OrderServiceImpl implements OrderService {
         Pair<String, Long> response = paymentStrategy.pay(price, order.getId(), user.getCredit());
         user.setCredit(response.getSecond());
 
-        order.setStatus(OrderStatus.PAID);
+        if (order.getPaymentType().equals(PaymentType.WECHAT_PAY)) {
+            order.setStatus(OrderStatus.PAID);
+        }
         userDao.save(user);
         orderDao.save(order);
         return response.getFirst();
     }
-
 }

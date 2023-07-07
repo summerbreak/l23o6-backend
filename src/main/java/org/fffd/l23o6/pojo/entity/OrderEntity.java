@@ -25,7 +25,8 @@ import java.util.Date;
 public class OrderEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq")
+    @SequenceGenerator(name = "seq", sequenceName = "order_id_seq", initialValue = 100, allocationSize = 1)
     private Long id;
 
     @NotNull

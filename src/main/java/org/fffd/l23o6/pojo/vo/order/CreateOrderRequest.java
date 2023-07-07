@@ -58,4 +58,8 @@ public class CreateOrderRequest{
     @Schema(description = "支付方式", required = true)
     @NotNull
     private PaymentType paymentType;
+
+    @Schema(description = "是否使用积分折扣", required = true)
+    @NotNull
+    private Boolean useCredit;
 }

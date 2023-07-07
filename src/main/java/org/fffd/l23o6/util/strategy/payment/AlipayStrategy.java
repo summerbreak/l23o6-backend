@@ -13,9 +13,11 @@ import io.github.lyc8503.spring.starter.incantation.exception.BizException;
 import org.fffd.l23o6.exception.BizError;
 import org.springframework.data.util.Pair;
 
+/**
+ * 使用沙盒环境的支付宝支付
+ */
 public class AlipayStrategy extends PaymentStrategy {
     public static final AlipayStrategy INSTANCE = new AlipayStrategy();
-    // 采用沙盒环境测试，所以配置信息固定
     // 应用ID,您的APPID，收款账号既是您的APPID对应支付宝账号
     private static final String app_id = "9021000122696964";
 
@@ -92,7 +94,6 @@ public class AlipayStrategy extends PaymentStrategy {
                 alipay_public_key, sign_type);
         AlipayTradeRefundRequest request = new AlipayTradeRefundRequest();
         JSONObject bizContent = new JSONObject();
-//        bizContent.put("trade_no", "2021081722001419121412730660");
         bizContent.put("out_trade_no", orderId + "");
         bizContent.put("refund_amount", price);
         bizContent.put("out_request_no", System.currentTimeMillis() + "");
@@ -102,7 +103,6 @@ public class AlipayStrategy extends PaymentStrategy {
             AlipayTradeRefundResponse response = alipayClient.execute(request);
             if (response.isSuccess()) {
                 System.out.println("调用成功");
-                credit = credit - priceToCredit(credit);
                 return Pair.of(response.getBody(), credit);
             } else {
                 System.out.println("调用失败");

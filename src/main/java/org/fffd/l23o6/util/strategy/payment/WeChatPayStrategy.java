@@ -4,6 +4,9 @@ import io.github.lyc8503.spring.starter.incantation.exception.BizException;
 import org.fffd.l23o6.exception.BizError;
 import org.springframework.data.util.Pair;
 
+/**
+ * 桩程序实现微信支付
+ */
 public class WeChatPayStrategy extends PaymentStrategy {
     public static final WeChatPayStrategy INSTANCE = new WeChatPayStrategy();
 
