@@ -137,6 +137,33 @@ public class KSeriesSeatStrategy extends TrainSeatStrategy {
         }
     }
 
+    public Map<KSeriesSeatType, Integer> getLeftSeatCount(int startStationIndex, int endStationIndex, boolean[][] seatMap) {
+        // TODO
+        int seatCount = seatMap[0].length;
+        Map<KSeriesSeatType, Integer> leftSeatCountMap = new HashMap<>();
+
+        for (KSeriesSeatType type : KSeriesSeatType.values()) {
+            if (type != KSeriesSeatType.NO_SEAT) {
+                int leftCount = 0;
+                for (int j = 0; j < seatCount; j++) {
+                    boolean flag = true;
+                    for (int i = startStationIndex; i < endStationIndex; i++) {
+                        if (seatMap[i][j]) {
+                            flag = false;
+                            break;
+                        }
+                    }
+                    if (flag && TYPE_MAP.get(type).containsKey(j)) {
+                        // Count the available seats of the specified type
+                        leftCount++;
+                    }
+                }
+                leftSeatCountMap.put(type, leftCount);
+            }
+        }
+        return leftSeatCountMap;
+    }
+
 
     public boolean[][] initSeatMap(int stationCount) {
         return new boolean[stationCount - 1][SOFT_SLEEPER_SEAT_MAP.size() + HARD_SLEEPER_SEAT_MAP.size() + SOFT_SEAT_MAP.size() + HARD_SEAT_MAP.size()];
