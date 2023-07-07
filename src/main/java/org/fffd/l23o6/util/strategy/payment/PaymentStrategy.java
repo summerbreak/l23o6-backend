@@ -2,14 +2,31 @@ package org.fffd.l23o6.util.strategy.payment;
 
 import io.github.lyc8503.spring.starter.incantation.exception.BizException;
 import org.fffd.l23o6.exception.BizError;
-import org.springframework.data.util.Pair;
 
 public abstract class PaymentStrategy {
 
     // TODO: implement this by adding necessary methods and implement specified strategy
-    public abstract Pair<String, Long> pay(double price, Long orderId, Long credit);
-    public abstract Pair<String, Long> refund(double price, Long orderId, Long credit);
 
+    /**
+     * 订单支付操作
+     * @param price 订单金额
+     * @param orderId 订单id
+     * @return 支付成功/失败消息
+     */
+    public abstract String pay(double price, Long orderId);
+
+    /**
+     * 订单退款操作
+     * @param price 订单金额
+     * @param orderId 订单id
+     */
+    public abstract void refund(double price, Long orderId);
+
+    /**
+     * 积分换算公式:1元=10积分
+     * @param price 订单金额
+     * @return 对应的积分数
+     */
     public static Long priceToCredit(double price) {
         return Math.round(price * 10);
     }

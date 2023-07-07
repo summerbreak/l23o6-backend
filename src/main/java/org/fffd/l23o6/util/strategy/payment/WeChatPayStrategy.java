@@ -2,7 +2,6 @@ package org.fffd.l23o6.util.strategy.payment;
 
 import io.github.lyc8503.spring.starter.incantation.exception.BizException;
 import org.fffd.l23o6.exception.BizError;
-import org.springframework.data.util.Pair;
 
 /**
  * 桩程序实现微信支付
@@ -16,18 +15,16 @@ public class WeChatPayStrategy extends PaymentStrategy {
     }
 
     @Override
-    public Pair<String, Long> pay(double price, Long orderId, Long credit) {
+    public String pay(double price, Long orderId) {
         if (money < price) {
             throw new BizException(BizError.MONEY_NOT_ENOUGH, String.format("only %.2f left", money));
         }
         money -= price;
-        credit += priceToCredit(price);
-        return Pair.of("success", credit);
+        return "success";
     }
 
     @Override
-    public Pair<String, Long> refund(double price, Long orderId, Long credit) {
+    public void refund(double price, Long orderId) {
         money += price;
-        return Pair.of("success", credit);
     }
 }

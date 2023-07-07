@@ -11,7 +11,6 @@ import lombok.experimental.Accessors;
 import org.fffd.l23o6.pojo.enum_.OrderStatus;
 import org.fffd.l23o6.pojo.enum_.PaymentType;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.util.Date;
 
@@ -52,6 +51,14 @@ public class OrderEntity {
 
     @NotNull
     private Double price;
+
+    // 是否启用积分折扣
+    @NotNull
+    private Boolean discountEnabled;
+
+    // 如果启用积分折扣，该订单花费的积分值
+    @NotNull
+    private Long usedCredit;
 
     @CreationTimestamp
     private Date createdAt;

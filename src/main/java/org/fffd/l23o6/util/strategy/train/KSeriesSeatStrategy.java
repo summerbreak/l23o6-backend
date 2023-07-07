@@ -116,6 +116,13 @@ public class KSeriesSeatStrategy extends TrainSeatStrategy {
         return null;
     }
 
+    /**
+     * 释放被取消的坐席（状态置为false）
+     * @param startStationIndex 起始站下标
+     * @param endStationIndex 终点站下标
+     * @param seatMap 坐席状态表
+     * @param seatName 坐席名
+     */
     public void freeSeat(int startStationIndex, int endStationIndex, boolean[][] seatMap, String seatName) {
         // used in 'cancelOrders'
         if (seatName.equals(KSeriesSeatType.NO_SEAT.getText())) {

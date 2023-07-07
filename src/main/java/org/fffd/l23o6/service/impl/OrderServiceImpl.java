@@ -23,8 +23,6 @@ import org.fffd.l23o6.util.strategy.payment.PaymentStrategy;
 import org.fffd.l23o6.util.strategy.payment.WeChatPayStrategy;
 import org.fffd.l23o6.util.strategy.train.GSeriesSeatStrategy;
 import org.fffd.l23o6.util.strategy.train.KSeriesSeatStrategy;
-import org.fffd.l23o6.util.strategy.train.TrainSeatStrategy;
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import io.github.lyc8503.spring.starter.incantation.exception.CommonErrorType;
@@ -81,7 +79,7 @@ public class OrderServiceImpl implements OrderService {
         }
         OrderEntity order = OrderEntity.builder().id(System.currentTimeMillis()).trainId(trainId).userId(userId)
                 .seat(seat).paymentType(paymentType).status(OrderStatus.PENDING_PAYMENT).arrivalStationId(toStationId)
-                .departureStationId(fromStationId).price(price).build();
+                .departureStationId(fromStationId).price(price).discountEnabled(useCredit).usedCredit(0L).build();
         train.setUpdatedAt(null);// force it to update
         trainDao.save(train);
         orderDao.save(order);
@@ -168,16 +166,17 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // TODO: refund user's money and credits if needed
-        if (order.getStatus() == OrderStatus.PAID) {
+        if (order.getStatus().equals(OrderStatus.PAID)) {
             PaymentStrategy paymentStrategy;
             switch (order.getPaymentType()) {
                 case ALI_PAY -> paymentStrategy = AlipayStrategy.INSTANCE;
                 case WECHAT_PAY -> paymentStrategy = WeChatPayStrategy.INSTANCE;
                 default -> throw new BizException(CommonErrorType.ILLEGAL_ARGUMENTS);
             }
-            Pair<String, Long> response = paymentStrategy.refund(order.getPrice(), order.getId(), user.getCredit());
-            if (!response.getFirst().equals("failed")) {
-                user.setCredit(response.getSecond());
+            paymentStrategy.refund(order.getPrice(), order.getId());
+        } else if (order.getStatus().equals(OrderStatus.PENDING_PAYMENT)) {
+            if (order.getDiscountEnabled()) {
+                user.setCredit(user.getCredit() + order.getUsedCredit());
             }
         }
 
@@ -217,14 +216,17 @@ public class OrderServiceImpl implements OrderService {
             case WECHAT_PAY -> paymentStrategy = WeChatPayStrategy.INSTANCE;
             default -> throw new BizException(CommonErrorType.ILLEGAL_ARGUMENTS);
         }
-        Pair<String, Long> response = paymentStrategy.pay(price, order.getId(), user.getCredit());
-        user.setCredit(response.getSecond());
+        String response = paymentStrategy.pay(price, order.getId());
+        if (order.getDiscountEnabled()) {
+            order.setUsedCredit(user.getCredit());
+            user.setCredit(0L);
+        }
 
         if (order.getPaymentType().equals(PaymentType.WECHAT_PAY)) {
             order.setStatus(OrderStatus.PAID);
         }
         userDao.save(user);
         orderDao.save(order);
-        return response.getFirst();
+        return response;
     }
 }

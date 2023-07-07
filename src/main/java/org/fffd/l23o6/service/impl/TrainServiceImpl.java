@@ -150,6 +150,13 @@ public class TrainServiceImpl implements TrainService {
         trainDao.deleteById(id);
     }
 
+    /**
+     * 根据车次信息生成TicketInfo类的VO List
+     * @param train 车次实体对象
+     * @param start 起始站序号
+     * @param end 终点站序号
+     * @return 对每一种坐席生成对应的TicketInfo类型的VO的集合
+     */
     private List<TicketInfo> createTicketInfos(TrainEntity train, int start, int end) {
         Map<? extends TrainSeatStrategy.SeatType, Integer> leftSeatCount = null;
         TrainSeatStrategy.SeatType[] seatTypes = null;
@@ -176,6 +183,11 @@ public class TrainServiceImpl implements TrainService {
         return ticketInfoList;
     }
 
+    /**
+     * 将两层嵌套的double列表转换成double类型的二维数组
+     * @param list double二层列表
+     * @return double二维数组
+     */
     private double[][] doubleListToArray(List<List<Double>> list) {
         int size0 = list.size(), size1 = list.get(0).size();
         double[][] arr = new double[size0][size1];
@@ -187,6 +199,11 @@ public class TrainServiceImpl implements TrainService {
         return arr;
     }
 
+    /**
+     * 将double类型的二维数组转换成两层嵌套的double列表
+     * @param arr double二维数组
+     * @return double二层列表
+     */
     private List<List<Double>> doubleArrayToList(double[][] arr) {
         int size0 = arr.length, size1 = arr[0].length;
         List<List<Double>> listOut = new ArrayList<>();
